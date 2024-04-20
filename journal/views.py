@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 
-from . forms import CreateUserForm, LoginForm
+from . forms import CreateUserForm, LoginForm, ThoughtForm
 
 from django.contrib.auth.models import auth 
 
@@ -9,6 +9,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
 from django.contrib import messages
+
+from . models import Thought
 
 
 def homepage(request):
@@ -62,3 +64,92 @@ def user_logout(request):
 @login_required(login_url = 'my-login')
 def dashboard(request):
     return render(request, 'journal/dashboard.html')
+
+
+@login_required(login_url='my-login')
+def create_thought(request):
+
+    form = ThoughtForm()
+
+    if request.method =='POST':
+        
+        form = ThoughtForm(request.POST)
+
+        if form.is_valid():
+
+            thought = form.save(commit=False)
+            thought.user = request.user
+            thought.save()
+
+            return redirect('my-thoughts')
+        
+    context = {'CreateThoughtForm': form}
+
+    return render(request, 'journal/create-thought.html', context)
+
+
+
+@login_required(login_url='my-login')
+def my_thought(request):
+
+    current_user = request.user.id
+
+    thought = Thought.objects.all().filter(user=current_user)
+
+    context = {'AllThoughts': thought}
+
+
+    return render(request, 'journal/my-thoughts.html', context)
+
+
+
+@login_required(login_url='my-login')
+def update_thought(request, pk):
+
+    try:
+        thought = Thought.objects.get(id=pk, user=request.user)
+
+    except: 
+
+        return redirect('my-thoughts')
+
+    form = ThoughtForm(instance=thought)
+
+    if request.method == 'POST':
+
+        form = ThoughtForm(request.POST, instance=thought)
+
+        if form.is_valid():
+
+            form.save()
+
+            return redirect('my-thoughts')
+        
+
+    context = {'UpdateThought': form}
+
+    return render(request, 'journal/update-thought.html', context)
+
+@login_required(login_url='my-login')
+def delete_thought(request, pk):
+
+    try: 
+
+        thought = Thought.objects.get(id=pk, user=request.user)
+
+    except: 
+
+        return redirect('my-thoughts')
+    
+    if request.method == 'POST':
+
+        thought.delete()
+
+        return redirect('my-thoughts')
+    
+    return render(request, 'journal/delete-thought.html')
+
+
+
+
+
