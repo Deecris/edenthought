@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 
-from . forms import CreateUserForm, LoginForm, ThoughtForm
+from . forms import CreateUserForm, LoginForm, ThoughtForm, UpdateUserForm
 
-from django.contrib.auth.models import auth 
+from django.contrib.auth.models import auth, User 
 
 from django.contrib.auth import authenticate, login, logout
 
@@ -15,7 +15,6 @@ from . models import Thought
 
 def homepage(request):
     return render(request, 'journal/index.html')
-
 
 def register(request):
 
@@ -35,7 +34,6 @@ def register(request):
     context = {'RegistrationForm': form}
     return render(request, 'journal/register.html', context)
 
- 
 def my_login(request):
    
    form = LoginForm()
@@ -65,7 +63,6 @@ def user_logout(request):
 def dashboard(request):
     return render(request, 'journal/dashboard.html')
 
-
 @login_required(login_url='my-login')
 def create_thought(request):
 
@@ -87,8 +84,6 @@ def create_thought(request):
 
     return render(request, 'journal/create-thought.html', context)
 
-
-
 @login_required(login_url='my-login')
 def my_thought(request):
 
@@ -100,8 +95,6 @@ def my_thought(request):
 
 
     return render(request, 'journal/my-thoughts.html', context)
-
-
 
 @login_required(login_url='my-login')
 def update_thought(request, pk):
@@ -149,6 +142,35 @@ def delete_thought(request, pk):
     
     return render(request, 'journal/delete-thought.html')
 
+@login_required(login_url='my-login')
+def profile_management(request):
+
+    form = UpdateUserForm(instance=request.user)
+    
+    if request.method == 'POST':
+
+        form = UpdateUserForm(request.POST, instance=request.user)
+
+        if form.is_valid():
+            form.save()
+
+            return redirect('dashboard')
+    
+    context = {'ProfileForm': form}
+
+    return render(request, 'journal/profile-management.html', context)
+
+@login_required(login_url='my-login')
+def delete_account(request):
+
+    if request.method == 'POST':
+
+        deleteUser = User.objects.get(username=request.user)
+        deleteUser.delete()
+
+        return redirect("")
+
+    return render(request, 'journal/delete-account.html')
 
 
 
